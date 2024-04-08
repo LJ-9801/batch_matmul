@@ -31,30 +31,40 @@
 
 int main(){
 
-  float* A = new float[BATCH_SIZE*M*K];
-  float* B = new float[BATCH_SIZE*K*N];
-  float* C = new float[BATCH_SIZE*M*N];
+  size_t A_size = BATCH_SIZE*M*K;
+#ifdef EQUAL
+  std::cout << "Doing elementwise matmul" << std::endl;
+  size_t B_size = BATCH_SIZE*K*N;
+#else
+  std::cout << "Doing broadcasted matmul" << std::endl;
+  size_t B_size = K*N;
+#endif
+  size_t C_size = BATCH_SIZE*M*N; 
+
+  float* A = new float[A_size];
+  float* B = new float[B_size];
+  float* C = new float[C_size];
 
   float* A_dev = nullptr;
   float* B_dev = nullptr;
   float* C_dev = nullptr; 
 
   // fill in a random number from range MIN to MAX
-  for (int i = 0; i < BATCH_SIZE*M*K; i++){
+  for (int i = 0; i < A_size; i++){
     A[i] = rand() % RANGE;
   }
 
-  for (int i = 0; i< BATCH_SIZE*K*N; i++){
+  for (int i = 0; i< B_size; i++){
     B[i] = rand() % RANGE;
   }
   
-  cudaMalloc((void**)&A_dev, sizeof(float)*BATCH_SIZE*M*K);
-  cudaMalloc((void**)&B_dev, sizeof(float)*BATCH_SIZE*K*N);
-  cudaMalloc((void**)&C_dev, sizeof(float)*BATCH_SIZE*M*N);
+  cudaMalloc((void**)&A_dev, sizeof(float)*A_size);
+  cudaMalloc((void**)&B_dev, sizeof(float)*B_size);
+  cudaMalloc((void**)&C_dev, sizeof(float)*C_size);
 
-  cudaMemcpy((void*)A_dev, A, sizeof(float)*BATCH_SIZE*M*K, cudaMemcpyHostToDevice);
-  cudaMemcpy((void*)B_dev, B, sizeof(float)*BATCH_SIZE*K*N, cudaMemcpyHostToDevice);
-  cudaMemcpy((void*)C_dev, C, sizeof(float)*BATCH_SIZE*M*N, cudaMemcpyHostToDevice);
+  cudaMemcpy((void*)A_dev, A, sizeof(float)*A_size, cudaMemcpyHostToDevice);
+  cudaMemcpy((void*)B_dev, B, sizeof(float)*B_size, cudaMemcpyHostToDevice);
+  cudaMemcpy((void*)C_dev, C, sizeof(float)*C_size, cudaMemcpyHostToDevice);
 
   std::cout << "CPU ops" << std::endl;
   elementwise_gemm_cpu(A, B, C, BATCH_SIZE, M, N, K);
