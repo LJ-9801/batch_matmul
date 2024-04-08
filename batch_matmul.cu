@@ -57,7 +57,7 @@ __global__ void gemm_gpu(float* A, float* B, float* C, int M, int N, int K, int 
 
 void elementwise_gemm(float* A, float* B, float* output, int batch_size, int M, int N, int K){
   const dim3 block(32, 32);
-  const dim3 grid((N + blockDim.x - 1) / blockDim.x, (M + blockDim.y - 1) / blockDim.y);
+  const dim3 grid((N + block.x - 1) / block.x, (M + block.y - 1) / block.y);
 
   for(int i = 0; i<batch_size; i++){
     cudaStream_t stream;
@@ -72,7 +72,7 @@ void elementwise_gemm(float* A, float* B, float* output, int batch_size, int M, 
 
 void broadcasted_gemm(float* A, float* B, float* output, int batch_size, int M, int N, int K){
   const dim3 block(32, 32);
-  const dim3 grid((N + blockDim.x - 1) / blockDim.x, (M + blockDim.y - 1) / blockDim.y);
+  const dim3 grid((N + block.x - 1) / block.x, (M + block.y - 1) / block.y);
 
   for(int i = 0; i<batch_size; i++){
     cudaStream_t stream;

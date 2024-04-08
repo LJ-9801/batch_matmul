@@ -45,6 +45,11 @@ int main(){
   }
 
 
+  delete[] A;
+  delete[] B;
+  delete[] C;
+
+
 
   return 0;
 }
