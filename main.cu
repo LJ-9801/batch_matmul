@@ -18,11 +18,16 @@
   // Tensor C will output shape[3, 4, M, N] 
 #endif
 
+// put your param here
 #define BATCH_SIZE 3*4
 #define M 1024
 #define N 1024
 #define K 1024
 
+#define MIN -2
+#define MAX 2
+
+#define RANGE (MAX + 1 - MIN) + MAX
 
 int main(){
 
@@ -30,8 +35,13 @@ int main(){
   float* B = new float[K*M];
   float* C = new float[M*N];
 
+  // fill in a random number from range MIN to MAX
   for (int i = 0; i < M*N; i++){
-    A[i] = rand();
+    A[i] = rand() % RANGE;
+  }
+
+  for (int i = 0; i<K*M; i++){
+    B[i] = rand() % RANGE;
   }
 
 
