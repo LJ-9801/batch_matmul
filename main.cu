@@ -31,25 +31,44 @@
 
 int main(){
 
-  float* A = new float[M*N];
-  float* B = new float[K*M];
-  float* C = new float[M*N];
+  float* A = new float[BATCH_SIZE*M*K];
+  float* B = new float[BATCH_SIZE*K*N];
+  float* C = new float[BATCH_SIZE*M*N];
+
+  float* A_dev = nullptr;
+  float* B_dev = nullptr;
+  float* C_dev = nullptr; 
 
   // fill in a random number from range MIN to MAX
-  for (int i = 0; i < M*N; i++){
+  for (int i = 0; i < BATCH_SIZE*M*K; i++){
     A[i] = rand() % RANGE;
   }
 
-  for (int i = 0; i<K*M; i++){
+  for (int i = 0; i< BATCH_SIZE*K*N; i++){
     B[i] = rand() % RANGE;
   }
+  
+  cudaMalloc((void**)&A_dev, sizeof(float)*BATCH_SIZE*M*K);
+  cudaMalloc((void**)&B_dev, sizeof(float)*BATCH_SIZE*K*N);
+  cudaMalloc((void**)&C_dev, sizeof(float)*BATCH_SIZE*M*N);
+
+  cudaMemcpy((void*)A_dev, A, sizeof(float)*BATCH_SIZE*M*K, cudaMemcpyHostToDevice);
+  cudaMemcpy((void*)B_dev, B, sizeof(float)*BATCH_SIZE*K*N, cudaMemcpyHostToDevice);
+  cudaMemcpy((void*)C_dev, C, sizeof(float)*BATCH_SIZE*M*N, cudaMemcpyHostToDevice);
+
+  std::cout << "CPU ops" << std::endl;
+  elementwise_gemm_cpu(A, B, C, BATCH_SIZE, M, N, K);
+  std::cout << "GPU ops" << std::endl;
+  elementwise_gemm(A_dev, B_dev, C_dev, BATCH_SIZE, M, N, K);
 
 
   delete[] A;
   delete[] B;
   delete[] C;
 
-
+  cudaFree(A_dev);
+  cudaFree(B_dev);
+  cudaFree(C_dev);
 
   return 0;
 }

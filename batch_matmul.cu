@@ -1,3 +1,5 @@
+#include <omp.h>
+#include <iostream>
 #include "batch_matmul.cuh"
 
 // =======================================
@@ -17,20 +19,22 @@ void gemm_cpu(float* A, float* B, float* C, int M, int N, int K, int lda, int ld
 }
 
 void elementwise_gemm_cpu(float* A, float* B, float* output, int batch_size, int M, int N, int K){
+  #pragma omp parallel for  
   for(int i = 0; i<batch_size; i++){
-    float* A_start = A + batch_size * M * K;
-    float* B_start = B + batch_size * K * N;
-    float* C_start = output + batch_size * M * N;
+    float* A_start = A + i * M * K;
+    float* B_start = B + i * K * N;
+    float* C_start = output + i * M * N;
     gemm_cpu(A_start, B_start, C_start, M, N, K, K, M, N);
   }
 }
 
 
 void broadcasted_gemm_cpu(float* A, float* B, float* output, int batch_size, int M, int N, int K){
+  #pragma omp parallel for  
   for(int i = 0; i<batch_size; i++){
-    float* A_start = A + batch_size * M * K;
+    float* A_start = A + i * M * K;
     float* B_start = B;
-    float* C_start = output + batch_size * M * N;
+    float* C_start = output + i * M * N;
     gemm_cpu(A_start, B_start, C_start, M, N, K, K, M, N);
   } 
 }
@@ -62,9 +66,9 @@ void elementwise_gemm(float* A, float* B, float* output, int batch_size, int M, 
   for(int i = 0; i<batch_size; i++){
     cudaStream_t stream;
     cudaStreamCreate(&stream);
-    float* A_start = A + batch_size * M * K;
-    float* B_start = B + batch_size * K * N;
-    float* C_start = output + batch_size * M * N;
+    float* A_start = A + i * M * K;
+    float* B_start = B + i * K * N;
+    float* C_start = output + i * M * N;
     gemm_gpu<<<grid, block, 0, stream>>>(A_start, B_start, C_start, M, N, K, K, M, N);
   }
 }
@@ -77,9 +81,9 @@ void broadcasted_gemm(float* A, float* B, float* output, int batch_size, int M, 
   for(int i = 0; i<batch_size; i++){
     cudaStream_t stream;
     cudaStreamCreate(&stream);
-    float* A_start = A + batch_size * M * K;
+    float* A_start = A + i * M * K;
     float* B_start = B;
-    float* C_start = output + batch_size * M * N;
+    float* C_start = output + i * M * N;
     gemm_gpu<<<grid, block, 0, stream>>>(A_start, B_start, C_start, M, N, K, K, M, N);
   }
 }
