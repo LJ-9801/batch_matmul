@@ -87,3 +87,13 @@ void broadcasted_gemm(float* A, float* B, float* output, int batch_size, int M, 
     gemm_gpu<<<grid, block, 0, stream>>>(A_start, B_start, C_start, M, N, K, K, M, N);
   }
 }
+
+bool verify(float* truth, float* cmp, size_t size, float tol){
+  for (int i = 0; i<size; i++){
+    if(abs(truth[i] - cmp[i]) > tol){
+      return false;
+    } 
+  }
+
+  return true;
+}

@@ -27,7 +27,7 @@
 #define MIN -2
 #define MAX 2
 
-#define RANGE (MAX + 1 - MIN) + MAX
+#define RANGE (MIN + (MAX - MIN) * ((float)rand() / RAND_MAX))
 
 int main(){
 
@@ -51,26 +51,30 @@ int main(){
 
   // fill in a random number from range MIN to MAX
   for (int i = 0; i < A_size; i++){
-    A[i] = rand() % RANGE;
+    A[i] = RANGE;
   }
 
   for (int i = 0; i< B_size; i++){
-    B[i] = rand() % RANGE;
+    B[i] = RANGE;
   }
-  
+
   cudaMalloc((void**)&A_dev, sizeof(float)*A_size);
   cudaMalloc((void**)&B_dev, sizeof(float)*B_size);
   cudaMalloc((void**)&C_dev, sizeof(float)*C_size);
 
-  cudaMemcpy((void*)A_dev, A, sizeof(float)*A_size, cudaMemcpyHostToDevice);
-  cudaMemcpy((void*)B_dev, B, sizeof(float)*B_size, cudaMemcpyHostToDevice);
-  cudaMemcpy((void*)C_dev, C, sizeof(float)*C_size, cudaMemcpyHostToDevice);
+  cudaMemcpy((void*)A_dev, (void*)A, sizeof(float)*A_size, cudaMemcpyHostToDevice);
+  cudaMemcpy((void*)B_dev, (void*)B, sizeof(float)*B_size, cudaMemcpyHostToDevice);
+  cudaMemcpy((void*)C_dev, (void*)C, sizeof(float)*C_size, cudaMemcpyHostToDevice);
 
   std::cout << "CPU ops" << std::endl;
   elementwise_gemm_cpu(A, B, C, BATCH_SIZE, M, N, K);
   std::cout << "GPU ops" << std::endl;
   elementwise_gemm(A_dev, B_dev, C_dev, BATCH_SIZE, M, N, K);
 
+  float* C_verify = new float[C_size];
+  cudaMemcpy((void*)C_verify, (void*)C_dev, sizeof(float)*C_size, cudaMemcpyDeviceToHost);
+
+  std::cout << (verify(C, C_verify, C_size, 0.005)? "OK" : "not OK") << std::endl;
 
   delete[] A;
   delete[] B;

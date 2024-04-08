@@ -9,6 +9,6 @@ void gemm_cpu(float* A, float* B, float* C, int M, int N, int K, int lda, int ld
 void elementwise_gemm_cpu(float* A, float* B, float* output, int batch_size, int M, int N, int K);
 void broadcasted_gemm_cpu(float* A, float* B, float* output, int batch_size, int M, int N, int K);
   
-
+bool verify(float* truth, float* cmp, size_t size, float tol);
 
 #endif
