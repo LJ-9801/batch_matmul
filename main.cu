@@ -24,6 +24,9 @@
 #define N 1024
 #define K 1024
 
+// you can set your tolarance for comparing with your result with groud truth
+#define TOL 0.005
+
 #define MIN -2
 #define MAX 2
 
@@ -67,14 +70,33 @@ int main(){
   cudaMemcpy((void*)C_dev, (void*)C, sizeof(float)*C_size, cudaMemcpyHostToDevice);
 
   std::cout << "CPU ops" << std::endl;
-  elementwise_gemm_cpu(A, B, C, BATCH_SIZE, M, N, K);
+  #ifdef EQUAL
+    elementwise_gemm_cpu(A, B, C, BATCH_SIZE, M, N, K);
+  #else
+    broadcasted_gemm_cpu(A, B, C, BATCH_SIZE, M, N, K);
+  #endif
+
   std::cout << "GPU ops" << std::endl;
-  elementwise_gemm(A_dev, B_dev, C_dev, BATCH_SIZE, M, N, K);
+
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  cudaEventRecord(start);
+  #ifdef EQUAL
+    elementwise_gemm(A_dev, B_dev, C_dev, BATCH_SIZE, M, N, K);
+  #else
+    broadcasted_gemm(A_dev, B_dev, C_dev, BATCH_SIZE, M, N, K);
+  #endif
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+  float milliseconds = 0;
+  cudaEventElapsedTime(&milliseconds, start, stop);
 
   float* C_verify = new float[C_size];
   cudaMemcpy((void*)C_verify, (void*)C_dev, sizeof(float)*C_size, cudaMemcpyDeviceToHost);
 
-  std::cout << (verify(C, C_verify, C_size, 0.005)? "OK" : "not OK") << std::endl;
+  std::cout << (verify(C, C_verify, C_size, TOL)? "OK" : "not OK") << std::endl;
+  std::cout << "Time elapsed: " << milliseconds << "ms" << std::endl;
 
   delete[] A;
   delete[] B;
